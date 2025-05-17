@@ -3,12 +3,8 @@ import os
 
 def compare():
     prolog = Prolog()
-    # Normaliza la ruta para evitar problemas con caracteres de escape
-    file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "prueba.pl"))
-    normalized_path = file_path.replace('\\', '/')
-    prolog.consult(f"{normalized_path}")
-    for result in prolog.query("talla(5, Y)"):
-        print(f"Resultado: {result['Y']}")
-
+    prolog.consult("prueba.pl",)
+    print(list(prolog.query("talla(1,Y)")))
+    
 if __name__ == "__main__":
     compare()
