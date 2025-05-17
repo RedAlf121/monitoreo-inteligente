@@ -1,10 +1,16 @@
 from fastapi import FastAPI
 from controllers.item_controller import router as item_router
+from env_utils import init_env_vars, get_env_vars
+from services.scanner.borrow_scan import scan_borrowings
+from services.scheduler.watcher import start_watching
 
-app = FastAPI()
+if __name__ == '__main__':
+    init_env_vars()
+    print(get_env_vars())
+    app = FastAPI()
+    app.include_router(item_router)
+    start_watching()
 
 @app.get("/")
 def read_root():
     return {"message": "Welcome to FastAPI!"}
-
-app.include_router(item_router)

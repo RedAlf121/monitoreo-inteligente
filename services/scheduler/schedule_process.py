@@ -1,45 +1,64 @@
-from scheduler import TIME_DEFAULT,LOG_PATH,LOG_FORMAT
+from . import TIME_DEFAULT,LOG_PATH,LOG_FORMAT
 import schedule
 from datetime import datetime
 import pickle
 import time
+import os
+from pathlib import Path
 
-def start(job):
-    if not is_notified():
-        if not is_later_default():
-            job_wrapper(job)
-        test_schedule(lambda:job_wrapper(job))
+# Convertir a ruta absoluta si es necesario
+LOG_PATH_ABSOLUTE = os.path.abspath(LOG_PATH)
+
+def execute_scheduled_task(scheduling_method, task_function, testing=False):
+    if not has_task_run_today() or testing:
+        if not is_time_past_default_execution_time():
+            execute_and_log_task(task_function)
+        scheduling_method(lambda: execute_and_log_task(task_function))
         while True:
             schedule.run_pending()
             time.sleep(1)
+    else:
+        print("Task already run today")
 
-def schedule_process(job):
-    schedule.every().days.at(TIME_DEFAULT).do(job)
+def start_test_schedule(task_function):
+    execute_scheduled_task(configure_minute_schedule, task_function, testing=True)
 
-def test_schedule(job):
-    schedule.every().minutes.do(job)
+def start_daily_schedule(task_function):
+    execute_scheduled_task(configure_daily_schedule, task_function)
 
-def is_later_default():
-    format = '%H:%M'
-    now = datetime.now().strftime(format)
-    time_now = datetime.now().strptime(now,format)
-    default = datetime.now().strptime(TIME_DEFAULT,format)
-    return time_now>default
+def configure_daily_schedule(task_function):
+    schedule.every().days.at(TIME_DEFAULT).do(task_function)
 
-def job_wrapper(job):
-    now = datetime.now().strftime(LOG_FORMAT)
-    job()
+def configure_minute_schedule(task_function):
+    schedule.every().minutes.do(task_function)
+
+def is_time_past_default_execution_time():
+    time_format = '%H:%M'
+    current_time_str = datetime.now().strftime(time_format)
+    current_time_datetime = datetime.now().strptime(current_time_str, time_format)
+    default_time_datetime = datetime.now().strptime(TIME_DEFAULT, time_format)
+    return current_time_datetime > default_time_datetime
+
+def execute_and_log_task(task_function):
+    current_execution_time = datetime.now().strftime(LOG_FORMAT)
+    task_function()
     
-    with open(LOG_PATH,'wb') as f:
-        pickle.dump(now,f)
+    # Asegurar que el directorio exista
+    os.makedirs(os.path.dirname(LOG_PATH_ABSOLUTE), exist_ok=True)
+    
+    with open(LOG_PATH_ABSOLUTE, 'wb') as log_file:
+        pickle.dump(current_execution_time, log_file)
 
-def is_notified():
+def has_task_run_today():
     try:
-        with open(LOG_PATH,'rb') as f:
-            date = pickle.load(f)
-            now = datetime.now().strftime(LOG_FORMAT)
-        return date==now
-    except EOFError:
+        if not os.path.exists(LOG_PATH_ABSOLUTE):
+            return False
+            
+        with open(LOG_PATH_ABSOLUTE, 'rb') as log_file:
+            last_execution_date = pickle.load(log_file)
+            current_date = datetime.now().strftime(LOG_FORMAT)
+        return last_execution_date == current_date
+    except (EOFError, FileNotFoundError):
         return False 
 
 
