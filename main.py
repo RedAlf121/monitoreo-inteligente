@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from controllers.item_controller import router as item_router
+from controllers.document_controller import router as document_router
 
 app = FastAPI()
 
@@ -7,4 +7,4 @@ app = FastAPI()
 def read_root():
     return {"message": "Welcome to FastAPI!"}
 
-app.include_router(item_router)
+app.include_router(document_router)
