@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 import os
-
+__all__ = ["init_env_vars","get_env_vars"]
 env_vars = {}
 
 def get_env_vars_from_dotenv(dotenv_path='.env'):
