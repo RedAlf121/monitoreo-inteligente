@@ -3,7 +3,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import os
 from jinja2 import Environment, FileSystemLoader
-from messager.email import EMAIL_SENDER
+from services.messager.email import EMAIL_SENDER
 from enum import Enum,auto
 
 class Type(Enum):

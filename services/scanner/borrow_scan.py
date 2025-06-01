@@ -1,60 +1,99 @@
-from models.repositories.mongo_db_borrowing_repository import MongoDBBorrowingRepository
-from langchain_openai import ChatOpenAI
-from utils.prompt_store import database_prompt
-from langchain.agents import AgentExecutor, create_react_agent
-from env_utils import get_env_vars
-from langchain_mcp_adapters.client import MultiServerMCPClient
+from services.messager.email.models import Customer
+from services.messager.messager import send
+from models.agent.agent_builder import MCPAgentBuilder, MCPAgent
+from models.agent.prompt_factory import database_prompt
+from models.agent.model_factory import ModelFactory
+from models.agent.tools_loader import load_mcp_config_from_json
 
-def scan_borrowings(collection_name: str = 'borrowings'):
-    repository = MongoDBBorrowingRepository()
-    borrowings = repository.list_all()
-    for borrowing in borrowings:
-        print(borrowing)
-
-def create_scanner_agent() -> AgentExecutor:
-    agent_llm = prepare_llm()
-    tools = []  # Aquí irán las herramientas MCP
-    # Usar create_react_agent para que acepte {"input": ...}
-    react_agent = create_react_agent(agent_llm, tools)
-    agent = AgentExecutor(
-        agent=react_agent,
-        tools=tools,
-        verbose=True
-    )
-    return agent
-
-def prepare_mcp_client():
-    #TODO usar mcp_json_fetcher y cargar el MCPServerClient desde el json
-    return MultiServerMCPClient({
-            "MongoDB": {
-                "command": "npx",
-                "args": [
-                "-y",
-                "mongodb-mcp-server",
-                "--connectionString",
-                "mongodb://localhost:27017/libraryBD"
-                ]
+async def get_agent_response():
+    prompt = database_prompt()
+    agent = MCPAgentBuilder(MCPAgent).\
+                with_prompt(prompt).\
+                with_mcp_servers(load_mcp_config_from_json()).\
+                with_model("groq","qwen-qwq-32b").\
+                build()
+    await agent.setup()
+        
+    response = await agent.run("""
+            List all users with this format
+            {
+                name: string,
+                email: string,
+                books: [string],
+                category: string
             }
-        }
-    )
+        """)
+    
+    return response
 
-def prepare_llm():
-    llm = ChatOpenAI(
-        api_key=get_env_vars()["LLM_KEY"],
-        model_name="mixtral-8x7b-32768",
-        base_url=get_env_vars()["LLM_URL"],
-        temperature=0
-    )
-    chain = llm | database_prompt()
-    return chain
 
-def use_scanner_agent() -> str:
-    agent: AgentExecutor = create_scanner_agent()
-    # Si tu versión de langchain es asíncrona, usa: result = await agent.ainvoke({"input": "Menciona 3 bases de datos"})
-    result = agent.invoke({
-        "input": "Menciona 3 bases de datos"
-    })
-    # El resultado puede ser un dict, revisa la clave correcta (usualmente 'output' o similar)
-    if isinstance(result, dict) and "output" in result:
-        return result["output"]
-    return str(result)
+
+async def scan_borrowings():
+    try:
+        response = await get_agent_response()
+        print(response)
+        if not response["users"]:
+            raise Exception("Error trying to access the database")
+        if response["users"]==[]:
+            print("No users found")
+            return
+        
+        #if there are users, send the message
+        for user in response["users"]:
+            customer = Customer(
+                name=user["name"],
+                email=user["email"],
+                books=user["books"],
+                category=user["category"]
+            )
+            send(message_type="email",customer=customer)
+            print(f"mensaje al usuario {user['name']} fue enviado!")
+    except EOFError as e:
+        return EOFError("Cache is empty. Try a successful connection at least.")
+    except Exception as e:
+        print("Error en el envio")
+        e.with_traceback()
+
+
+
+
+#def scan_borrowings():
+#    try:
+#        response = {
+#             "users": [
+#                  {
+#                       "name": "Joe",
+#                       "email": "francismirezdpl@gmail.com",
+#                       "books": ["a","b","c"],
+#                       "category": "estudiante"
+#                  },
+#                  {
+#                       "name": "Frank",
+#                       "email": "francismirezdpl@gmail.com",
+#                       "books": ["a","b","c"],
+#                       "category": "estudiante"
+#                  },
+#                  {
+#                       "name": "Evan",
+#                       "email": "francismirezdpl@gmail.com",
+#                       "books": ["a","b","c"],
+#                       "category": "estudiante"
+#                  }
+#             ]
+#        }
+#        print(response)
+#        for user in response["users"]:
+#            customer = Customer(
+#                name=user["name"],
+#                email=user["email"],
+#                books=user["books"],
+#                category=user["category"]
+#            )
+#            send(message_type="email",customer=customer)
+#            print(f"mensaje al usuario {user['name']} fue enviado!")
+#    except EOFError as e:
+#        return EOFError("Cache is empty. Try a successful connection at least.")
+#    except Exception as e:
+#        print("Error en el envio")
+#        e.with_traceback()
+#

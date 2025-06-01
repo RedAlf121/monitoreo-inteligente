@@ -1,6 +1,6 @@
-from messager.email import SUBJECT_BOSS, SUBJECT_CUSTOMER
-from messager.email.models import EmailMessager, Template
-from messager.email.models import Customer,Type
+from services.messager.email import SUBJECT_BOSS, SUBJECT_CUSTOMER
+from services.messager.email.models import EmailMessager, Template
+from services.messager.email.models import Customer,Type
 
 
 TEMPLATES = {
