@@ -24,7 +24,7 @@ class TemplateFactory:
         subject=SUBJECT_CUSTOMER
         data={
             'name': customer.name,
-            'books': ['a','b','c']
+            'books': ['a','b','c'] if customer.books == [] else customer.books
         }
         return Template(template,subject,data)
     

@@ -13,8 +13,8 @@ if __name__ == '__main__':
     app.include_router(document_router)
     #start_watching()
     #use_scanner_agent()
-    asyncio.run(get_agent_response())
-    #asyncio.run(scan_borrowings())
+    #asyncio.run(get_agent_response())
+    asyncio.run(scan_borrowings())
     #scan_borrowings()
 
 

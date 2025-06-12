@@ -4,7 +4,7 @@ class ModelFactory:
 
     @staticmethod
     def build_groq_model(model_name: str = "qwen-qwq-32b"):
-        return ChatGroq(model_name=model_name)
+        return ChatGroq(model_name=model_name,temperature=0.01)
 
     @staticmethod
     def build_ollama_model(model_name: str):

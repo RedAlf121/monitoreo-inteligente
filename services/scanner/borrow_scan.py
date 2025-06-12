@@ -4,6 +4,8 @@ from models.agent.agent_builder import MCPAgentBuilder, MCPAgent
 from models.agent.prompt_factory import database_prompt
 from models.agent.model_factory import ModelFactory
 from models.agent.tools_loader import load_mcp_config_from_json
+from models.user import Users
+from models.agent.prompt_factory import user_parser
 
 async def get_agent_response():
     prompt = database_prompt()
@@ -15,13 +17,7 @@ async def get_agent_response():
     await agent.setup()
         
     response = await agent.run("""
-            List all users with this format
-            {
-                name: string,
-                email: string,
-                books: [string],
-                category: string
-            }
+            List all users 
         """)
     
     return response
@@ -31,23 +27,26 @@ async def get_agent_response():
 async def scan_borrowings():
     try:
         response = await get_agent_response()
-        print(response)
-        if not response["users"]:
+        parser = user_parser()
+        try:
+            users: Users = parser.parse(response)
+            print(response)
+        except:
             raise Exception("Error trying to access the database")
-        if response["users"]==[]:
+        if users is None or users==[]:
             print("No users found")
             return
         
         #if there are users, send the message
-        for user in response["users"]:
+        for user in users.userList:
             customer = Customer(
-                name=user["name"],
-                email=user["email"],
-                books=user["books"],
-                category=user["category"]
+                name=user.name,
+                email=user.email,
+                books=user.books,
+                category=user.category
             )
             send(message_type="email",customer=customer)
-            print(f"mensaje al usuario {user['name']} fue enviado!")
+            print(f"mensaje al usuario {user.name} fue enviado!")
     except EOFError as e:
         return EOFError("Cache is empty. Try a successful connection at least.")
     except Exception as e:

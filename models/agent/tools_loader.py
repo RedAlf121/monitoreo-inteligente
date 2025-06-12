@@ -34,6 +34,7 @@ async def get_tools_with_cache(mcp_config:dict, retries: int = 5, cache_file: st
             raise EOFError("Cache empty. Try again")
         except Exception as e:
             print(f"Error loading tools: {e}")
+            e.with_traceback()
             time.sleep(2)
             retries -= 1
     return tools

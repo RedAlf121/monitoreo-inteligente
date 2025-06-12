@@ -15,9 +15,13 @@ class MCPAgent:
         self.agent = None
         self.executor = None
         self.mcp_config = {}
+        self.toolkit = None
     
     def set_mcp_servers(self, mcp_servers: dict):
         self.mcp_config = mcp_servers
+
+    def set_toolkit(self, toolkit):
+        self.toolkit=toolkit
 
     def set_prompt(self, prompt):
         self.prompt = prompt
@@ -33,10 +37,16 @@ class MCPAgent:
         self.max_iterations = max_iterations
 
     async def setup(self):
-        print("Loading tools...")
-        self.tools = await get_tools_with_cache(self.mcp_config)
         print("Loading language model...")
         self.llm = CHAT_MODELS_DICT[self.model_type](model_name=self.model_name)
+        print("Loading tools...")
+        mcp_tools = []
+        toolkit_tools = []
+        if self.mcp_config != {}:
+            mcp_tools = await get_tools_with_cache(self.mcp_config)
+        if self.toolkit is not None:
+            toolkit_tools = self.toolkit(self.llm).tools()
+        self.tools = [*mcp_tools,*toolkit_tools]
         print("Loading prompt...")
         self.prompt = database_prompt()
         print("Creating agent...")
@@ -57,9 +67,10 @@ class MCPAgent:
         result = await self.executor.ainvoke({
             "input": user_input,
             "tools": [(tool.name, tool.description) for tool in self.tools],
+            "top_k": 10
         })
         print("Execution finished.")
-        print(result["output"])
+        print(result)
         return result["output"]
 
 class MCPAgentBuilder:
@@ -70,7 +81,9 @@ class MCPAgentBuilder:
     def with_model(self, model_type:str, model_name:str):
         self._agent.set_model(model_type,model_name)
         return self
-    
+    def with_toolkit(self,toolkit):
+        self._agent.set_toolkit(toolkit)
+        return self
     def with_max_iterations(self,max_iterations):
         self._agent.set_max_iterations(max_iterations)
         return self
