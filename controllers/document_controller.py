@@ -1,6 +1,6 @@
 from fastapi import APIRouter, UploadFile, File
 import os
-from services.document_reader import process_document
+from services.document_reader import load_document
 
 router = APIRouter()
 
@@ -16,6 +16,6 @@ def upload_document(file: UploadFile = File(...)):
         f.write(file.file.read())
 
     # Call the document reader service
-    result = process_document(file_path)
+    result = load_document(file_path)
 
     return {"message": result}
