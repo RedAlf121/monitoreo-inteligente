@@ -1,7 +1,6 @@
 from services.messager.email import SUBJECT_BOSS, SUBJECT_CUSTOMER
 from services.messager.email.models import EmailMessager, Template
-from services.messager.email.models import Customer,Type
-
+from services.messager.email.models import Customer,Type,Book
 
 TEMPLATES = {
     Type.PREVENT: lambda customer: TemplateFactory.build_customer_template(customer),
@@ -24,7 +23,7 @@ class TemplateFactory:
         subject=SUBJECT_CUSTOMER
         data={
             'name': customer.name,
-            'books': ['a','b','c'] if customer.books == [] else customer.books
+            'books': [Book(title='a', code='1', due_date='2025-07-01'), Book(title='b', code='2', due_date='2025-07-02'), Book(title='c', code='3', due_date='2025-07-03')] if customer.books == [] else customer.books
         }
         return Template(template,subject,data)
     
