@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-
+from langchain_community.document_loaders import UnstructuredFileLoader
 class FileComparisonStatus(Enum):
     EMPTY_FILE = "Empty file received"
     IDENTICAL = "Files are identical"
@@ -14,7 +14,7 @@ class FileComparisonResult:
     def show_status_error(self):
         return self.status.value
 
-    def is_correct(self):
+    def is_correct(self,document:UnstructuredFileLoader):
         return self.status.value==FileComparisonStatus.IMPROVED
 
 

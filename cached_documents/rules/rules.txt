@@ -1,0 +1,65 @@
+
+<think>
+Okay, I need to filter the given rules to keep only those that define when a loan is considered overdue. The user wants three specific points: when a loan is delayed, conditions for an item being overdue, and explicit definitions of expiration. I have to exclude anything about renewals, penalties (except the delay condition), and non-expiration loan limits.
+
+Looking at the provided rules, I'll go through each one:
+
+1. "Si el documento es de la Salas Especializadas o Referencia el usuario debe dirigirse a estas salas para su préstamo." This is about where to borrow certain documents, not about overdue loans. Exclude.
+
+2. "El técnico bibliotecario revisa el estado del documento en DOCTUS y Kardex." Technical system checks, not a rule about overdue. Exclude.
+
+3. "Se llena el modelo de solicitud de préstamo con datos del usuario y del libro, revisando que no falte ningún dato para su posible reclamación en caso necesario (datos del usuario y del libro)." Form completion, administrative step. Exclude.
+
+4. "Se envía la solicitud a Salas Especializadas o Referencia para su aprobación." Process step, not a rule. Exclude.
+
+5. "Si el documento no es de Salas Especializadas o Referencia, el técnico procede a prestar el documento con un plazo de 1 semana con derecho a renovación según su demanda." Here, the loan period is 1 week. This defines the loan duration, which is part of when it becomes overdue. Keep this as it specifies the initial period.
+
+6. "El usuario recibe el documento con un recibo que incluye fecha de préstamo y fecha de devolución." The receipt includes due date. This is part of defining when the loan is overdue. Keep as it establishes the return deadline.
+
+7. "Si el usuario no devuelve el documento a tiempo, el técnico aplicará sanciones según el reglamento interno." The penalty is mentioned, but the user said to exclude penalties except the condition of delay. The key here is the "no devuelve a tiempo" part, which defines when it's overdue. The penalty itself is excluded, but the condition of not returning on time is part of the overdue definition. So keep the condition part, omit the penalty.
+
+8. "Los documentos de Salas Especializadas o Referencia no pueden ser renovados." This is a renewal restriction, which the user wants excluded. Exclude.
+
+9. "El préstamo máximo por usuario es de 5 documentos simultáneos." This is a loan limit, not related to overdue status. Exclude.
+
+10. "Los libros dañados o no devueltos generan inhabilitación temporal." This mentions damage or non-return leading to temporary block. The "no devueltos" part relates to overdue, but "dañados" is unrelated. The block is a penalty, which should be excluded except the condition of not returning. So the condition of not returning on time is part of overdue, but the penalty (inhabilitación) is excluded. So only the part about not returning is relevant, but it's phrased as a consequence. Hmm, tricky. Maybe just the overdue condition is "no devueltos a tiempo" but the penalty part is to exclude. 
+
+Wait, the user said to exclude penalties except the condition of delay. So the rule "Si el usuario no devuelve el documento a tiempo" is the condition of being overdue. The penalty part (aplicará sanciones) is excluded. 
+
+Now compiling the filtered rules:
+
+- The loan period of 1 week (from point 5) defines when it's overdue after that time.
+- The receipt with due date (point 6) sets the deadline.
+- The condition of not returning on time (point 7's first part) is the overdue trigger.
+
+Other points like the 5-document limit or renewal restrictions are excluded. 
+
+So the final filtered rules are:
+
+1. Loan duration: 1 week (from point 5).
+2. Due date specified on receipt (point 6.
+3. Failure to return by the due date triggers overdue status (point 7's condition.
+
+Excluding all others as they relate to renewals, penalties beyond the condition, or unrelated limits.
+</think>
+
+**Reglas filtradas (SOLO condiciones de vencimiento):**  
+1. **Plazo de préstamo:** El préstamo se considera vencido si no se devuelve dentro de la fecha de devolución indicada en el recibo (ejemplo: 1 semana para documentos comunes).  
+2. **Condición de retraso:** El préstamo se declara en mora si el usuario no devuelve el documento **después de la fecha límite establecida** (verificable mediante la fecha de devolución en el recibo.  
+3. **Definición de vencimiento:** El vencimiento ocurre cuando transcurre el plazo acordado (ej. 1 semana) sin devolución, independientemente de la demanda o renovaciones.  
+
+**Reglas excluidas (no aplican a vencimiento):**  
+- Renovaciones ("derecho a renovación según demanda").  
+- Sanciones (solo se mantiene la condición de retraso, no la penalización.  
+- Límites de préstamo (ej. 5 documentos simultáneos).  
+
+**Formato verificable para monitoreo automático:**  
+- **Vencimiento activado cuando:**  
+  - Fecha actual > Fecha de devolución + plazo acordado (ej. 7 días).  
+  - Sin registro de devolución o renovación vigente.  
+- **Exclusión de renovaciones:** No se consideran en la definición de vencimiento.  
+
+**Ejemplo de regla explícita:**  
+*"Un préstamo se considera vencido si el usuario no devuelve el documento antes de la fecha de devolución indicada en el recibo, sin haber realizado una renovación previa."*  
+
+Solo se incluyen reglas que definen **cuándo** ocurre el vencimiento, sin referencias a sanciones, sistemas técnicos o procesos administrativos.

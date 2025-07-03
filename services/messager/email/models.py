@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import re
 import os
 from jinja2 import Environment, FileSystemLoader
-from messager.email import EMAIL_SENDER
+from services.messager.email import EMAIL_SENDER
 from enum import Enum,auto
 
 class Type(Enum):
@@ -15,17 +16,31 @@ class Category(Enum):
     TEACHER = auto()
 
 @dataclass
+class Book:
+    title: str
+    code: str
+    due_date: str
+
+
+@dataclass
 class Customer:
     name: str
     email: str
-    books:list
-    category: Category
+    books: list[Book]
+
+    def __post_init__(self):
+        if not self.books or self.books == []:
+            raise ValueError("La lista de libros no puede estar vacía")
+        email_regex = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+        if not re.match(email_regex, self.email):
+            raise ValueError(f"Correo no válido: {self.email}")
 
 @dataclass
 class Boss:
     name: str
     email: str
     customer: Customer
+    
 
 @dataclass
 class Template:

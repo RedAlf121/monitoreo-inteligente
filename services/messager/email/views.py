@@ -1,7 +1,7 @@
 import ssl
 import smtplib
-from messager.email import EMAIL_PASSWORD, EMAIL_SENDER, factory
-from messager.email.models import Customer, Type
+from services.messager.email import EMAIL_PASSWORD, EMAIL_SENDER, factory
+from services.messager.email.models import Customer, Type
 
 def send(customer: Customer=None, type: Type=Type.PREVENT):
     message=factory.build_email_message(customer,type)
